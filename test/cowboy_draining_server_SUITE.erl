@@ -53,7 +53,7 @@ shutdown_test(_C) ->
     dummy_sup:stop(),
     ok = receive_loop(fun(ok) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)),
     ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
-    ok = receive_loop(fun(Result) -> {error, econnrefused} = Result end, ?NUMBER_OF_WORKERS, timer:seconds(20)).
+    ok = receive_loop(fun({error, econnrefused}) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)).
 
 request_interrupt_test(_C) ->
     ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
@@ -61,7 +61,7 @@ request_interrupt_test(_C) ->
     dummy_sup:stop(),
     ok = receive_loop(fun({error, timeout}) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)),
     ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
-    ok = receive_loop(fun(Result) -> {error, econnrefused} = Result end, ?NUMBER_OF_WORKERS, timer:seconds(20)).
+    ok = receive_loop(fun({error, econnrefused}) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)).
 
 %
 
