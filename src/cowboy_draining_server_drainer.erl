@@ -3,9 +3,7 @@
 -behaviour(gen_server).
 
 -type options()
-    :: #{ shutdown  := timeout()
-        , ranch_ref := ranch:ref()
-        }.
+    :: #{shutdown := non_neg_integer(), ranch_ref := ranch:ref()}.
 
 -type shutdown()
     :: brutal_kill | pos_integer().
@@ -31,9 +29,10 @@
 child_spec(Opts) ->
     RanchRef = maps:get(ranch_ref, Opts),
     Shutdown = get_shutdown_param(Opts),
-    #{ id       => ?MODULE
-     , start    => {?MODULE, start_link, [RanchRef]}
-     , shutdown => Shutdown
+    #{
+        id       => ?MODULE,
+        start    => {?MODULE, start_link, [RanchRef]},
+        shutdown => Shutdown
      }.
 
 -spec start_link(RanchRef) ->
