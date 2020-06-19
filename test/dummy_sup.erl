@@ -32,18 +32,7 @@ child_spec(Delay)
     -> {Transport, TransportOpts} = get_socket_transport(),
        Dispatch = cowboy_router:compile([{'_', [ {"/", dummy_handler, [Delay]}]}]),
        CowboyOpts = #{ env => #{ dispatch => Dispatch } },
-       #{ id => ?MODULE
-        , type => supervisor
-        , start =>
-            { genlib_adhoc_supervisor
-            , start_link
-            , [ #{strategy => one_for_all}
-              , [ ranch:child_spec(?MODULE, Transport, TransportOpts, cowboy_clear, CowboyOpts)
-                , cowboy_draining_server:child_spec(#{ranch_ref => ?MODULE, shutdown => 5000})
-                ]
-              ]
-            }
-        }.
+       cowboy_draining_server:child_spec(?MODULE, Transport, TransportOpts, CowboyOpts, 5000).
 
 -spec get_socket_transport()
     -> {module(), ranch:opts()}.
