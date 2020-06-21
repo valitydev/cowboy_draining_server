@@ -1,10 +1,11 @@
 {application, cowboy_draining_server,
- [{description, "An OTP library"},
+ [{description, "A library for graceful shutdowns."},
   {vsn, "0.1.0"},
   {registered, []},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    cowboy
    ]},
   {env,[]},
   {modules, []},
