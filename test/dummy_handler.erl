@@ -2,8 +2,8 @@
 
 -export([init/2]).
 
-init(Req0, [Timeout] = Opts) ->
+init(Req0, [Delay] = Opts) ->
     Headers = #{<<"content-type">> => <<"text/plain">>},
-    timer:sleep(Timeout),
+    timer:sleep(Delay),
     Req = cowboy_req:reply(200, Headers, <<"Hello world!">>, Req0),
     {ok, Req, Opts}.
