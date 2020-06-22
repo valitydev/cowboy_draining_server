@@ -72,8 +72,7 @@ shutdown_test(_C) ->
 -spec request_interrupt_test(config()) ->
     ok.
 request_interrupt_test(_C) ->
-    {IP, Port} = ranch:get_addr(dummy_sup),
-    Address = inet:ntoa(IP) ++ ":" ++ integer_to_list(Port),
+    Address = get_address(),
     ok = spawn_workers(Address, self(), ?NUMBER_OF_WORKERS),
     ok = timer:sleep(1000),
     ok = dummy_sup:stop(),
