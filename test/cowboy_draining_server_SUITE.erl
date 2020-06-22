@@ -1,7 +1,6 @@
 -module(cowboy_draining_server_SUITE).
 
--export([ all/0
-        , groups/0]).
+-export([ all/0 ]).
 
 -export([ init_per_suite/1
         , end_per_suite/1
@@ -13,22 +12,26 @@
         , request_interrupt_test/1
         ]).
 
-all() -> [ { group, all_tests } ].
+-type test_case_name()  :: atom().
+-type config()          :: [{atom(), any()}].
 
-groups() -> [ { all_tests
-              , []
-              , [ shutdown_test
-                , request_interrupt_test
-                ]
-              }
-            ].
+-spec all() ->
+    [test_case_name()].
+all() ->
+    [ shutdown_test
+    , request_interrupt_test
+    ].
 
 -define(NUMBER_OF_WORKERS, 10).
 
+-spec init_per_suite(config()) ->
+    config().
 init_per_suite(C) ->
     genlib_app:start_application(hackney),
     C.
 
+-spec init_per_testcase(test_case_name(), config()) ->
+    config().
 init_per_testcase(shutdown_test, C) ->
     genlib_app:start_application(ranch),
     dummy_sup:start_link(2000),
@@ -40,34 +43,50 @@ init_per_testcase(request_interrupt_test, C) ->
     unlink(whereis(dummy_sup)),
     C.
 
+-spec end_per_testcase(test_case_name(), config()) ->
+    ok.
 end_per_testcase(_Name, _C) ->
     application:stop(ranch),
     ok.
 
+-spec end_per_suite(config()) ->
+    ok.
 end_per_suite(_C) ->
     ok.
 
+-spec shutdown_test(config()) ->
+    ok.
 shutdown_test(_C) ->
     ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
     ok = timer:sleep(1000),
-    dummy_sup:stop(),
-    ok = receive_loop(fun(ok) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)),
+    ok = dummy_sup:stop(),
+    ok = receive_loop(fun(ok) -> ok end,
+                      ?NUMBER_OF_WORKERS,
+                      timer:seconds(20)),
     ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
-    ok = receive_loop(fun({error, econnrefused}) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)).
+    ok = receive_loop(fun({error, econnrefused}) -> ok end,
+                      ?NUMBER_OF_WORKERS,
+                      timer:seconds(20)).
 
+-spec request_interrupt_test(config()) ->
+    ok.
 request_interrupt_test(_C) ->
     ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
     ok = timer:sleep(1000),
-    dummy_sup:stop(),
-    ok = receive_loop(fun({error, timeout}) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)),
+    ok = dummy_sup:stop(),
+    ok = receive_loop(fun({error, timeout}) -> ok end,
+                      ?NUMBER_OF_WORKERS,
+                      timer:seconds(20)),
     ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
-    ok = receive_loop(fun({error, econnrefused}) -> ok end, ?NUMBER_OF_WORKERS, timer:seconds(20)).
+    ok = receive_loop(fun({error, econnrefused}) -> ok end,
+                      ?NUMBER_OF_WORKERS,
+                      timer:seconds(20)).
 
 %
 
-receive_loop(_, N, _Timeout) when N =< 0 ->
+receive_loop(_MatchFun, N, _Timeout) when N =< 0 ->
     ok;
-receive_loop(MatchFun, N, Timeout) ->
+receive_loop( MatchFun, N,  Timeout) ->
     receive
         {result, Result} ->
             MatchFun(Result)

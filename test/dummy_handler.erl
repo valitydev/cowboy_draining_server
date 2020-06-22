@@ -2,6 +2,8 @@
 
 -export([init/2]).
 
+-spec init(cowboy:req(), [Delay :: pos_integer()]) ->
+    {ok, {supervisor:sup_flags(), [supervisor:child_spec()]}}.
 init(Req0, [Delay] = Opts) ->
     Headers = #{<<"content-type">> => <<"text/plain">>},
     timer:sleep(Delay),
