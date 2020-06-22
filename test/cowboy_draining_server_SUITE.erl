@@ -52,6 +52,7 @@ end_per_testcase(_Name, _C) ->
 -spec end_per_suite(config()) ->
     ok.
 end_per_suite(_C) ->
+    application:stop(hackney),
     ok.
 
 -spec shutdown_test(config()) ->
