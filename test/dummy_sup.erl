@@ -8,8 +8,6 @@
 -export([init/1]).
 
 -define(DEFAULT_ACCEPTORS_POOLSIZE, 100).
--define(DEFAULT_IP_ADDR, "::").
--define(DEFAULT_PORT, 8080).
 
 -spec start_link(Delay :: pos_integer()) ->
     {ok, pid()} | {error, {already_started, pid()}}.
@@ -47,13 +45,10 @@ child_spec(Delay)
 -spec get_socket_transport()
     -> {module(), ranch:opts()}.
 get_socket_transport() ->
-    {ok, IP}      = inet:parse_address(?DEFAULT_IP_ADDR),
-    Port          = ?DEFAULT_PORT,
     AcceptorsPool = ?DEFAULT_ACCEPTORS_POOLSIZE,
     {
         ranch_tcp,
         #{
-            socket_opts => [{ip, IP}, {port, Port}],
             num_acceptors => AcceptorsPool
          }
     }.

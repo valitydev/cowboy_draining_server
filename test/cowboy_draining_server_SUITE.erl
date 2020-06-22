@@ -57,13 +57,14 @@ end_per_suite(_C) ->
 -spec shutdown_test(config()) ->
     ok.
 shutdown_test(_C) ->
-    ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
+    Address = get_address(),
+    ok = spawn_workers(Address, self(), ?NUMBER_OF_WORKERS),
     ok = timer:sleep(1000),
     ok = dummy_sup:stop(),
     ok = receive_loop(fun(ok) -> ok end,
                       ?NUMBER_OF_WORKERS,
                       timer:seconds(20)),
-    ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
+    ok = spawn_workers(Address, self(), ?NUMBER_OF_WORKERS),
     ok = receive_loop(fun({error, econnrefused}) -> ok end,
                       ?NUMBER_OF_WORKERS,
                       timer:seconds(20)).
@@ -71,18 +72,24 @@ shutdown_test(_C) ->
 -spec request_interrupt_test(config()) ->
     ok.
 request_interrupt_test(_C) ->
-    ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
+    {IP, Port} = ranch:get_addr(dummy_sup),
+    Address = inet:ntoa(IP) ++ ":" ++ integer_to_list(Port),
+    ok = spawn_workers(Address, self(), ?NUMBER_OF_WORKERS),
     ok = timer:sleep(1000),
     ok = dummy_sup:stop(),
     ok = receive_loop(fun({error, timeout}) -> ok end,
                       ?NUMBER_OF_WORKERS,
                       timer:seconds(20)),
-    ok = spawn_workers(self(), ?NUMBER_OF_WORKERS),
+    ok = spawn_workers(Address, self(), ?NUMBER_OF_WORKERS),
     ok = receive_loop(fun({error, econnrefused}) -> ok end,
                       ?NUMBER_OF_WORKERS,
                       timer:seconds(20)).
 
 %
+
+get_address() ->
+    {IP, Port} = ranch:get_addr(dummy_sup),
+    inet:ntoa(IP) ++ ":" ++ integer_to_list(Port).
 
 receive_loop(_MatchFun, N, _Timeout) when N =< 0 ->
     ok;
@@ -95,15 +102,15 @@ receive_loop( MatchFun, N,  Timeout) ->
     end,
     receive_loop(MatchFun, N - 1, Timeout).
 
-spawn_workers(_, N) when N =< 0 ->
+spawn_workers(_, _, N) when N =< 0 ->
     ok;
-spawn_workers(ParentPID, N) ->
-    erlang:spawn_link(fun() -> worker(ParentPID) end),
-    spawn_workers(ParentPID, N - 1).
+spawn_workers(Address, ParentPID, N) ->
+    erlang:spawn_link(fun() -> worker(Address, ParentPID) end),
+    spawn_workers(Address, ParentPID, N - 1).
 
-worker(ParentPID) ->
+worker(Address, ParentPID) ->
     Result =
-        case hackney:get("0.0.0.0:8080") of
+        case hackney:request(Address) of
             {error, _} = E -> E;
             _Success -> ok
         end,
