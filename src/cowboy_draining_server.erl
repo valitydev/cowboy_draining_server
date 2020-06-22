@@ -1,6 +1,6 @@
 -module(cowboy_draining_server).
 
--export([child_spec/5]).
+-export([child_spec/6]).
 
 %%====================================================================
 %% API functions
@@ -11,6 +11,7 @@
     Transport      :: ranch:module(),
     TransportOpts  :: ranch:opts(),
     CowboyOpts     :: cowboy:opts(),
+    Protocol       :: module(),
     Timeout        :: non_neg_integer()
 ) ->
     supervisor:child_spec().
@@ -19,10 +20,10 @@ child_spec(
     Transport,
     TransportOpts,
     CowboyOpts,
+    Protocol,
     Timeout
 ) ->
     SupOpts  = #{strategy => one_for_all},
-    Protocol = cowboy_clear,
     Ranch    = ranch:child_spec(
         RanchRef,
         Transport,
