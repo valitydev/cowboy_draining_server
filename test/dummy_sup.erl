@@ -37,8 +37,8 @@ child_spec(Delay)
            ?MODULE,
            Transport,
            TransportOpts,
-           CowboyOpts,
            Protocol,
+           CowboyOpts,
            5000
        ).
 

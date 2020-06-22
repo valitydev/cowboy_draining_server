@@ -10,8 +10,8 @@
     RanchRef       :: ranch:ref(),
     Transport      :: ranch:module(),
     TransportOpts  :: ranch:opts(),
-    CowboyOpts     :: cowboy:opts(),
     Protocol       :: module(),
+    CowboyOpts     :: cowboy:opts(),
     Timeout        :: non_neg_integer()
 ) ->
     supervisor:child_spec().
@@ -19,8 +19,8 @@ child_spec(
     RanchRef,
     Transport,
     TransportOpts,
-    CowboyOpts,
     Protocol,
+    CowboyOpts,
     Timeout
 ) ->
     SupOpts  = #{strategy => one_for_all},
