@@ -2,21 +2,21 @@
 
 -behaviour(supervisor).
 
--export([start/1]).
+-export([start/2]).
 -export([stop/0]).
--export([get_address/0]).
+-export([get_address/1]).
 
--export([start_link/1]).
+-export([start_link/2]).
 
 -export([init/1]).
 
 -define(DEFAULT_ACCEPTORS_POOLSIZE, 100).
 
--spec start(Delay :: pos_integer()) ->
+-spec start(Name :: term(), Delay :: pos_integer()) ->
     ok.
-start(Delay) ->
-    dummy_sup:start_link(Delay),
-    unlink(whereis(dummy_sup)),
+start(Name, Delay) ->
+    dummy_sup:start_link(Name, Delay),
+    unlink(whereis(?MODULE)),
     ok.
 
 -spec stop() ->
@@ -25,32 +25,32 @@ stop() ->
     exit(whereis(?MODULE), kill),
     ok.
 
--spec get_address() ->
+-spec get_address(Name :: term()) ->
     string().
-get_address() ->
-    {IP, Port} = ranch:get_addr(?MODULE),
+get_address(Name) ->
+    {IP, Port} = ranch:get_addr({?MODULE, Name}),
     inet:ntoa(IP) ++ ":" ++ integer_to_list(Port).
 
--spec start_link(Delay :: pos_integer()) ->
+-spec start_link(Name :: term(), Delay :: pos_integer()) ->
     {ok, pid()} | {error, {already_started, pid()}}.
-start_link(Delay) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Delay]).
+start_link(Name, Delay) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Name, Delay]).
 
--spec init([Delay :: pos_integer()]) ->
+-spec init(Args :: [term()]) ->
     {ok, {supervisor:sup_flags(), [supervisor:child_spec()]}}.
-init([Delay]) ->
-    {ok, {{one_for_all, 0, 1}, [child_spec(Delay)]}}.
+init([Name, Delay]) ->
+    {ok, {{one_for_all, 0, 1}, [child_spec(Name, Delay)]}}.
 
--spec child_spec(Delay :: pos_integer())
+-spec child_spec(Name :: term(), Delay :: pos_integer())
     -> supervisor:child_spec().
-child_spec(Delay)
+child_spec(Name, Delay)
     -> {Transport, TransportOpts} = get_socket_transport(),
        Route      = [{'_', [ {"/", dummy_handler, [Delay]}]}],
        Dispatch   = cowboy_router:compile(Route),
        CowboyOpts = #{env => #{dispatch => Dispatch}},
        Protocol   = cowboy_clear,
        cowboy_draining_server:child_spec(
-           ?MODULE,
+           {?MODULE, Name},
            Transport,
            TransportOpts,
            Protocol,

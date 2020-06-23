@@ -12,6 +12,8 @@
         , request_interrupt_test/1
         ]).
 
+-include_lib("common_test/include/ct.hrl").
+
 -type test_case_name()  :: atom().
 -type config()          :: [{atom(), any()}].
 
@@ -27,35 +29,33 @@ all() ->
 -spec init_per_suite(config()) ->
     config().
 init_per_suite(C) ->
+    genlib_app:start_application(ranch),
     genlib_app:start_application(hackney),
     C.
 
 -spec init_per_testcase(test_case_name(), config()) ->
     config().
-init_per_testcase(shutdown_test, C) ->
-    genlib_app:start_application(ranch),
-    ok = dummy_sup:start(2000),
-    C;
-init_per_testcase(request_interrupt_test, C) ->
-    genlib_app:start_application(ranch),
-    ok = dummy_sup:start(20000),
-    C.
+init_per_testcase(Name, C) ->
+    [{name, Name} | C].
 
 -spec end_per_testcase(test_case_name(), config()) ->
     ok.
 end_per_testcase(_Name, _C) ->
-    ok = application:stop(ranch),
     ok.
 
 -spec end_per_suite(config()) ->
     ok.
 end_per_suite(_C) ->
+    ok = application:stop(ranch),
     ok = application:stop(hackney).
 
 -spec shutdown_test(config()) ->
     ok.
-shutdown_test(_C) ->
-    Address = dummy_sup:get_address(),
+shutdown_test(C) ->
+    Name = ?config(name, C),
+    Delay = 2000,
+    ok = dummy_sup:start(Name, Delay),
+    Address = dummy_sup:get_address(?config(name, C)),
     ok = spawn_workers(Address, self(), ?NUMBER_OF_WORKERS),
     ok = timer:sleep(1000),
     ok = dummy_sup:stop(),
@@ -69,8 +69,11 @@ shutdown_test(_C) ->
 
 -spec request_interrupt_test(config()) ->
     ok.
-request_interrupt_test(_C) ->
-    Address = dummy_sup:get_address(),
+request_interrupt_test(C) ->
+    Name = ?config(name, C),
+    Delay = 20000,
+    ok = dummy_sup:start(Name, Delay),
+    Address = dummy_sup:get_address(Name),
     ok = spawn_workers(Address, self(), ?NUMBER_OF_WORKERS),
     ok = timer:sleep(1000),
     ok = dummy_sup:stop(),
