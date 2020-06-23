@@ -64,8 +64,7 @@ handle_cast(_Msg, RanchRef) ->
     ok when RanchRef :: ranch:ref().
 terminate(shutdown, Ref) ->
     ok = ranch:suspend_listener(Ref),
-    ok = ranch:wait_for_connections(Ref, '==', 0),
-    ok = ranch:remove_connection(Ref);
+    ok = ranch:wait_for_connections(Ref, '==', 0);
 terminate(_Msg, _RanchRef) ->
     ok.
 
